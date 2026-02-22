@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Droplets, Brain, Heart } from "lucide-react";
+import CycleHistoryChart from "@/components/insights/CycleHistoryChart";
 
 export default function Insights() {
   const { data: logs } = useQuery({

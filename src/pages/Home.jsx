@@ -6,6 +6,7 @@ import { differenceInDays, addDays, format } from "date-fns";
 import CycleWheel from "@/components/dashboard/CycleWheel";
 import QuickStats from "@/components/dashboard/QuickStats";
 import DailyTip from "@/components/dashboard/DailyTip";
+import AIPrediction from "@/components/dashboard/AIPrediction";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, MessageCircle } from "lucide-react";
