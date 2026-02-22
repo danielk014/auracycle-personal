@@ -70,9 +70,11 @@ export default function AIAssistant() {
     }
 
     if (symptomLogs.length > 0) {
-      context += "\nRecent Symptoms:\n";
+      context += "\nRecent Symptoms (format: name:severity where 1=mild, 2=moderate, 3=severe):\n";
       symptomLogs.forEach((l) => {
-        context += `- ${l.date}: ${l.symptoms.join(", ")}\n`;
+        context += `- ${l.date}: ${l.symptoms.join(", ")}`;
+        if (l.stress_level) context += `, Stress: ${l.stress_level}/5`;
+        context += "\n";
       });
     }
 
@@ -80,6 +82,19 @@ export default function AIAssistant() {
       context += "\nRecent Moods:\n";
       moodLogs.forEach((l) => {
         context += `- ${l.date}: ${l.moods.join(", ")}\n`;
+      });
+    }
+
+    const lifestyleLogs = logs.filter((l) => l.sleep_hours || l.stress_level || l.exercise_type).slice(0, 10);
+    if (lifestyleLogs.length > 0) {
+      context += "\nRecent Lifestyle Factors:\n";
+      lifestyleLogs.forEach((l) => {
+        const parts = [];
+        if (l.sleep_hours) parts.push(`Sleep: ${l.sleep_hours}h (quality: ${l.sleep_quality || "??"}/5)`);
+        if (l.stress_level) parts.push(`Stress: ${l.stress_level}/5`);
+        if (l.exercise_type && l.exercise_type !== "none") parts.push(`Exercise: ${l.exercise_type}`);
+        if (l.water_intake) parts.push(`Water: ${l.water_intake} glasses`);
+        if (parts.length) context += `- ${l.date}: ${parts.join(", ")}\n`;
       });
     }
 
