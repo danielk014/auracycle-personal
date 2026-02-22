@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { ArrowLeft, Check, ChevronRight, Droplets, Heart, Brain, Pencil, Dumbbell, Moon, GlassWater } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Droplets, Heart, Brain, Pencil, Dumbbell, Moon, GlassWater, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FlowPicker from "@/components/log/FlowPicker";
@@ -27,8 +27,11 @@ export default function LogEntry() {
     moods: [],
     notes: "",
     sleep_hours: "",
+    sleep_quality: null,
     water_intake: "",
     exercise: false,
+    exercise_type: "none",
+    stress_level: null,
   });
 
   const { data: settings } = useQuery({
