@@ -87,9 +87,10 @@ export default function AIAssistant() {
   };
 
   const sendMessage = async (text) => {
-    if (!text.trim() || isLoading) return;
+    const trimmed = (text || "").trim();
+    if (!trimmed || isLoading) return;
 
-    const userMessage = { role: "user", content: text };
+    const userMessage = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -108,12 +109,13 @@ ${context}
 Previous conversation:
 ${conversationHistory}
 
-User's question: ${text}
+User's question: ${trimmed}
 
 Provide a helpful, personalized response based on the user's data. Use markdown formatting for readability. Keep responses concise but informative.`,
       });
 
-      setMessages((prev) => [...prev, { role: "assistant", content: response }]);
+      const content = typeof response === "string" ? response : response?.content ?? JSON.stringify(response);
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
