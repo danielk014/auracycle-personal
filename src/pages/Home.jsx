@@ -50,6 +50,8 @@ export default function Home() {
 
   const phase = getPhase(cycleDay, cycleLength, periodLength);
 
+  const [aiPrediction, setAiPrediction] = useState(null);
+
   return (
     <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
       <motion.div
@@ -67,6 +69,7 @@ export default function Home() {
           cycleLength={cycleLength}
           periodLength={periodLength}
           phase={phase}
+          prediction={aiPrediction}
         />
         {lastPeriodStart && (
           <motion.p
