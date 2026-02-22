@@ -6,7 +6,7 @@ import { ArrowLeft, Send, Sparkles, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/pages/utils";
 import { format, differenceInDays, addDays } from "date-fns";
-import ChatBubble from "../components/chat/ChatBubble";
+import ChatBubble from "@/components/chat/ChatBubble";
 import { Button } from "@/components/ui/button";
 
 const SUGGESTIONS = [

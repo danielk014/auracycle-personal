@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/pages/utils";
 import { Home, CalendarDays, TrendingUp, Settings, Sparkles } from "lucide-react";
 

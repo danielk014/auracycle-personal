@@ -47,21 +47,21 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Home from './pages/Home';
-import LogEntry from './pages/LogEntry';
-import Calendar from './pages/Calendar';
 import AIAssistant from './pages/AIAssistant';
+import Calendar from './pages/Calendar';
+import Home from './pages/Home';
 import Insights from './pages/Insights';
+import LogEntry from './pages/LogEntry';
 import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "LogEntry": LogEntry,
-    "Calendar": Calendar,
     "AIAssistant": AIAssistant,
+    "Calendar": Calendar,
+    "Home": Home,
     "Insights": Insights,
+    "LogEntry": LogEntry,
     "Settings": Settings,
 }
 

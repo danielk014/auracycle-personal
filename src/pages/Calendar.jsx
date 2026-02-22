@@ -2,7 +2,7 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import CycleCalendar from "../components/calendar/CycleCalendar";
+import CycleCalendar from "@/components/calendar/CycleCalendar";
 import { format, isSameDay } from "date-fns";
 import { Droplets, Brain, Heart, Pencil } from "lucide-react";
 
