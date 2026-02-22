@@ -28,6 +28,14 @@ export default function Settings() {
     last_period_start: "",
     notifications_enabled: true,
     birth_year: "",
+    reminder_period_enabled: false,
+    reminder_period_time: "08:00",
+    reminder_symptoms_enabled: false,
+    reminder_symptoms_time: "20:00",
+    reminder_mood_enabled: false,
+    reminder_mood_time: "21:00",
+    reminder_daily_tip_enabled: false,
+    reminder_daily_tip_time: "09:00",
   });
 
   useEffect(() => {
@@ -38,6 +46,14 @@ export default function Settings() {
         last_period_start: settings.last_period_start || "",
         notifications_enabled: settings.notifications_enabled !== false,
         birth_year: settings.birth_year || "",
+        reminder_period_enabled: settings.reminder_period_enabled || false,
+        reminder_period_time: settings.reminder_period_time || "08:00",
+        reminder_symptoms_enabled: settings.reminder_symptoms_enabled || false,
+        reminder_symptoms_time: settings.reminder_symptoms_time || "20:00",
+        reminder_mood_enabled: settings.reminder_mood_enabled || false,
+        reminder_mood_time: settings.reminder_mood_time || "21:00",
+        reminder_daily_tip_enabled: settings.reminder_daily_tip_enabled || false,
+        reminder_daily_tip_time: settings.reminder_daily_tip_time || "09:00",
       });
     }
   }, [settings]);
