@@ -44,21 +44,21 @@ export default function LogEntry() {
 
   const createLog = useMutation({
     mutationFn: async () => {
+      const shared = {
+        date: format(date, "yyyy-MM-dd"),
+        symptoms: data.symptoms,
+        moods: data.moods,
+        notes: data.notes,
+        sleep_hours: data.sleep_hours ? parseFloat(data.sleep_hours) : undefined,
+        sleep_quality: data.sleep_quality || undefined,
+        water_intake: data.water_intake ? parseInt(data.water_intake) : undefined,
+        exercise: data.exercise,
+        exercise_type: data.exercise_type !== "none" ? data.exercise_type : undefined,
+        stress_level: data.stress_level || undefined,
+      };
       const logs = [];
       if (data.flow_intensity) {
-        logs.push({
-          date: format(date, "yyyy-MM-dd"),
-          log_type: "period",
-          flow_intensity: data.flow_intensity,
-          symptoms: data.symptoms,
-          moods: data.moods,
-          notes: data.notes,
-          sleep_hours: data.sleep_hours ? parseFloat(data.sleep_hours) : undefined,
-          water_intake: data.water_intake ? parseInt(data.water_intake) : undefined,
-          exercise: data.exercise,
-        });
-
-        // Update last_period_start in settings if this is a period log
+        logs.push({ ...shared, log_type: "period", flow_intensity: data.flow_intensity });
         if (settings) {
           await base44.entities.CycleSettings.update(settings.id, {
             last_period_start: format(date, "yyyy-MM-dd"),
@@ -72,14 +72,8 @@ export default function LogEntry() {
         }
       } else {
         logs.push({
-          date: format(date, "yyyy-MM-dd"),
+          ...shared,
           log_type: data.symptoms.length > 0 ? "symptom" : data.moods.length > 0 ? "mood" : "note",
-          symptoms: data.symptoms,
-          moods: data.moods,
-          notes: data.notes,
-          sleep_hours: data.sleep_hours ? parseFloat(data.sleep_hours) : undefined,
-          water_intake: data.water_intake ? parseInt(data.water_intake) : undefined,
-          exercise: data.exercise,
         });
       }
 
