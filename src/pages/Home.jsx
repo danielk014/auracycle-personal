@@ -103,6 +103,8 @@ export default function Home() {
         />
       </div>
 
+      <AIPrediction logs={recentLogs} settings={settings} />
+
       <DailyTip phase={phase} />
 
       <div className="fixed bottom-24 right-4 flex flex-col gap-3 z-10">

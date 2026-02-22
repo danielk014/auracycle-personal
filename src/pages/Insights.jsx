@@ -61,6 +61,8 @@ export default function Insights() {
         Insights
       </motion.h1>
 
+      <CycleHistoryChart logs={logs} />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
