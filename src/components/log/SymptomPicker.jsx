@@ -1,44 +1,55 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SYMPTOMS = [
-  { id: "cramps", emoji: "🤕", label: "Cramps" },
-  { id: "headache", emoji: "🤯", label: "Headache" },
-  { id: "bloating", emoji: "🎈", label: "Bloating" },
-  { id: "fatigue", emoji: "😴", label: "Fatigue" },
-  { id: "backache", emoji: "💆", label: "Backache" },
-  { id: "nausea", emoji: "🤢", label: "Nausea" },
+const CUSTOM_SYMPTOMS_KEY = "auracycle_custom_symptoms";
+
+const DEFAULT_SYMPTOMS = [
+  { id: "cramps",            emoji: "🤕", label: "Cramps" },
+  { id: "headache",          emoji: "🤯", label: "Headache" },
+  { id: "bloating",          emoji: "🎈", label: "Bloating" },
+  { id: "fatigue",           emoji: "😴", label: "Fatigue" },
+  { id: "backache",          emoji: "💆", label: "Backache" },
+  { id: "nausea",            emoji: "🤢", label: "Nausea" },
   { id: "breast_tenderness", emoji: "💗", label: "Breast Tender." },
-  { id: "acne", emoji: "😣", label: "Acne" },
-  { id: "cravings", emoji: "🍫", label: "Cravings" },
-  { id: "insomnia", emoji: "🌙", label: "Insomnia" },
-  { id: "hot_flashes", emoji: "🔥", label: "Hot Flashes" },
-  { id: "dizziness", emoji: "💫", label: "Dizziness" },
-  { id: "joint_pain", emoji: "🦴", label: "Joint Pain" },
-  { id: "digestive", emoji: "🫃", label: "Digestive" },
-  { id: "migraine", emoji: "⚡", label: "Migraine" },
+  { id: "acne",              emoji: "😣", label: "Acne" },
+  { id: "cravings",          emoji: "🍫", label: "Cravings" },
+  { id: "insomnia",          emoji: "🌙", label: "Insomnia" },
+  { id: "hot_flashes",       emoji: "🔥", label: "Hot Flashes" },
+  { id: "dizziness",         emoji: "💫", label: "Dizziness" },
+  { id: "joint_pain",        emoji: "🦴", label: "Joint Pain" },
+  { id: "digestive",         emoji: "🫃", label: "Digestive" },
+  { id: "migraine",          emoji: "⚡", label: "Migraine" },
 ];
 
 const SEVERITY_LABELS = ["Mild", "Moderate", "Severe"];
 
-// Stored as "id:severity" e.g. "cramps:2"
 function parseSymptom(s) {
   const [id, sev] = s.split(":");
   return { id, severity: sev ? parseInt(sev) : 1 };
 }
 
+function loadCustomSymptoms() {
+  try {
+    return JSON.parse(localStorage.getItem(CUSTOM_SYMPTOMS_KEY) || "[]");
+  } catch { return []; }
+}
+
 export default function SymptomPicker({ selected = [], onChange }) {
   const [severityTarget, setSeverityTarget] = useState(null);
+  const customSymptoms = loadCustomSymptoms();
+  const allSymptoms = [...DEFAULT_SYMPTOMS, ...customSymptoms];
+
+  // Filter out med: prefixed entries
+  const nonMedSelected = selected.filter(s => !s.startsWith("med:"));
 
   const selectedMap = {};
-  selected.forEach((s) => {
+  nonMedSelected.forEach((s) => {
     const { id, severity } = parseSymptom(s);
     selectedMap[id] = severity;
   });
 
   const toggle = (id) => {
     if (selectedMap[id] !== undefined) {
-      // deselect
       onChange(selected.filter((s) => !s.startsWith(id + ":")));
       if (severityTarget === id) setSeverityTarget(null);
     } else {
@@ -55,20 +66,26 @@ export default function SymptomPicker({ selected = [], onChange }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        {SYMPTOMS.map((s, i) => {
+        {allSymptoms.map((s, i) => {
           const isSelected = selectedMap[s.id] !== undefined;
           const severity = selectedMap[s.id];
-          const severityColor = severity === 1 ? "border-amber-200 bg-amber-50" : severity === 2 ? "border-orange-300 bg-orange-50" : "border-rose-400 bg-rose-50";
+          const severityColor = severity === 1
+            ? "border-amber-200 bg-amber-50"
+            : severity === 2
+            ? "border-orange-300 bg-orange-50"
+            : "border-rose-400 bg-rose-50";
 
           return (
             <motion.button
               key={s.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.03 }}
+              transition={{ delay: i * 0.02 }}
               onClick={() => toggle(s.id)}
               className={`flex flex-col items-center py-3 px-2 rounded-2xl border-2 transition-all relative ${
-                isSelected ? severityColor + " shadow-sm" : "border-slate-100 bg-white hover:border-slate-200"
+                isSelected
+                  ? severityColor + " shadow-sm"
+                  : "border-slate-100 bg-white hover:border-slate-200"
               }`}
             >
               <span className="text-xl mb-1">{s.emoji}</span>
@@ -83,7 +100,7 @@ export default function SymptomPicker({ selected = [], onChange }) {
         })}
       </div>
 
-      {/* Severity picker for last-selected symptom */}
+      {/* Severity picker */}
       <AnimatePresence>
         {severityTarget && (
           <motion.div
@@ -93,7 +110,7 @@ export default function SymptomPicker({ selected = [], onChange }) {
             className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm"
           >
             <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">
-              How severe is your {SYMPTOMS.find((s) => s.id === severityTarget)?.label}?
+              How severe is your {allSymptoms.find((s) => s.id === severityTarget)?.label}?
             </p>
             <div className="grid grid-cols-3 gap-2">
               {SEVERITY_LABELS.map((label, i) => (
@@ -116,7 +133,13 @@ export default function SymptomPicker({ selected = [], onChange }) {
         )}
       </AnimatePresence>
 
-      {selected.length > 0 && (
+      {customSymptoms.length > 0 && (
+        <p className="text-[10px] text-slate-300 text-center">
+          ✦ Custom symptoms shown below defaults · Manage in Settings
+        </p>
+      )}
+
+      {nonMedSelected.length > 0 && (
         <p className="text-xs text-slate-400 text-center">Tap a symptom again to deselect</p>
       )}
     </div>
