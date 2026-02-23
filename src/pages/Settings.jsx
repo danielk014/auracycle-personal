@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Settings as SettingsIcon, Save, Check, LogOut, Plus, X, Smile } from "lucide-react";
 import { toast } from "sonner";
 import RemindersSection from "@/components/settings/RemindersSection";
+import { useAuth } from "@/lib/AuthContext";
 
 const CUSTOM_SYMPTOMS_KEY = "auracycle_custom_symptoms";
 
@@ -25,6 +26,7 @@ const EMOJI_OPTIONS = ["😣","💊","🤒","🥴","😰","😤","💆","🦴","
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
   const [saved, setSaved] = useState(false);
   const [customSymptoms, setCustomSymptoms] = useState(loadCustomSymptoms);
   const [newSymptomLabel, setNewSymptomLabel] = useState("");
@@ -314,7 +316,7 @@ export default function Settings() {
 
         <Button
           variant="outline"
-          onClick={() => base44.auth.logout()}
+          onClick={logout}
           className="w-full rounded-xl h-12 text-slate-500 border-slate-200"
         >
           <LogOut className="w-4 h-4 mr-2" /> Log Out

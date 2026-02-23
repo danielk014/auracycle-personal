@@ -1,111 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { differenceInDays, parseISO, format, addDays } from "date-fns";
 
-export default function AIPrediction({ logs, settings, onPrediction }) {
-  const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
+/**
+ * Computes next period prediction purely from logged data (no API call).
+ */
+function computePrediction(logs, settings) {
+  const periodLogs = logs
+    .filter(l => l.log_type === "period" && l.date)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  useEffect(() => {
-    if (!settings || fetched || logs.length < 3) return;
+  if (periodLogs.length < 2) return null;
 
-    const periodLogs = logs
-      .filter((l) => l.log_type === "period" && l.date)
-      .sort((a, b) => parseISO(b.date) - parseISO(a.date))
-      .slice(0, 20);
-
-    if (periodLogs.length < 3) return;
-
-    setLoading(true);
-    setFetched(true);
-
-    const context = periodLogs
-      .map((l) => {
-        let s = `${l.date} (flow: ${l.flow_intensity || "unknown"}`;
-        if (l.stress_level) s += `, stress: ${l.stress_level}/5`;
-        if (l.sleep_quality) s += `, sleep quality: ${l.sleep_quality}/5`;
-        if (l.exercise_type && l.exercise_type !== "none") s += `, exercise: ${l.exercise_type}`;
-        return s + ")";
-      })
-      .join(", ");
-
-    const symptomContext = logs
-      .filter((l) => l.symptoms?.length > 0)
-      .slice(0, 10)
-      .map((l) => `${l.date}: ${l.symptoms.join(", ")}`)
-      .join("; ");
-
-    base44.integrations.Core.InvokeLLM({
-      prompt: `You are a menstrual cycle prediction AI. Based on historical period data, predict the next period.
-
-Historical period log dates (with lifestyle factors): ${context}
-Recent symptoms: ${symptomContext || "none"}
-Reported average cycle length: ${settings.average_cycle_length || 28} days
-Last period start: ${settings.last_period_start || "unknown"}
-Today's date: ${format(new Date(), "yyyy-MM-dd")}
-
-Analyze the actual gaps between periods and predict:
-1. predicted_date: The most likely start date of the next period (YYYY-MM-DD format)
-2. range_start: Earliest possible start (YYYY-MM-DD)
-3. range_end: Latest possible start (YYYY-MM-DD)
-4. confidence: "high", "medium", or "low" based on cycle regularity
-5. insight: One short sentence (max 12 words) about the pattern you observed`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          predicted_date: { type: "string" },
-          range_start: { type: "string" },
-          range_end: { type: "string" },
-          confidence: { type: "string" },
-          insight: { type: "string" },
-        },
-      },
-    })
-      .then((res) => { setPrediction(res); onPrediction?.(res); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [logs, settings]);
-
-  if (!settings?.last_period_start) return null;
-
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-gradient-to-r from-violet-50 to-rose-50 rounded-2xl px-4 py-3 border border-violet-100 flex items-center gap-3 mb-5"
-      >
-        <Loader2 className="w-4 h-4 text-violet-400 animate-spin flex-shrink-0" />
-        <p className="text-xs text-violet-500">AI is analysing your cycle history…</p>
-      </motion.div>
-    );
+  // Find actual period start dates (gaps > 1 day between consecutive period logs)
+  const startDates = [];
+  for (let i = 0; i < periodLogs.length; i++) {
+    if (i === 0) { startDates.push(new Date(periodLogs[i].date)); continue; }
+    const gap = differenceInDays(new Date(periodLogs[i].date), new Date(periodLogs[i - 1].date));
+    if (gap > 1) startDates.push(new Date(periodLogs[i].date));
   }
 
-  if (!prediction) return null;
+  if (startDates.length < 2) return null;
+
+  // Calculate inter-cycle lengths
+  const cycleLengths = [];
+  for (let i = 1; i < startDates.length; i++) {
+    const diff = differenceInDays(startDates[i], startDates[i - 1]);
+    if (diff >= 18 && diff <= 50) cycleLengths.push(diff);
+  }
+
+  if (cycleLengths.length === 0) {
+    cycleLengths.push(settings?.average_cycle_length || 28);
+  }
+
+  // Weighted average (recent cycles weighted more)
+  let totalWeight = 0, weightedSum = 0;
+  cycleLengths.forEach((len, i) => {
+    const w = i + 1;
+    weightedSum += len * w;
+    totalWeight += w;
+  });
+  const avgLen = Math.round(weightedSum / totalWeight);
+
+  // Standard deviation for confidence bands
+  const mean    = cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length;
+  const stdDev  = Math.sqrt(
+    cycleLengths.reduce((sum, l) => sum + Math.pow(l - mean, 2), 0) / cycleLengths.length
+  );
+
+  const confidence = stdDev <= 2 ? "high" : stdDev <= 5 ? "medium" : "low";
+  const lastStart  = startDates[startDates.length - 1];
+
+  const predictedDate = addDays(lastStart, avgLen);
+  const rangeStart    = addDays(predictedDate, -Math.ceil(stdDev));
+  const rangeEnd      = addDays(predictedDate, Math.ceil(stdDev));
+
+  const insight = cycleLengths.length >= 3
+    ? `${avgLen}-day average across ${cycleLengths.length} tracked cycles`
+    : `Based on ${cycleLengths.length} recorded cycle${cycleLengths.length > 1 ? "s" : ""}`;
+
+  return {
+    predicted_date: format(predictedDate, "yyyy-MM-dd"),
+    range_start:    format(rangeStart,    "yyyy-MM-dd"),
+    range_end:      format(rangeEnd,      "yyyy-MM-dd"),
+    confidence,
+    insight,
+  };
+}
+
+export default function AIPrediction({ logs, settings, onPrediction }) {
+  const prediction = useMemo(() => {
+    const p = computePrediction(logs, settings);
+    onPrediction?.(p);
+    return p;
+  }, [logs?.length, settings?.last_period_start]);
+
+  if (!settings?.last_period_start || !prediction) return null;
 
   const confidenceColors = {
-    high: "text-emerald-600 bg-emerald-50",
-    medium: "text-amber-600 bg-amber-50",
-    low: "text-slate-500 bg-slate-100",
+    high:   "text-emerald-600 bg-emerald-50 border-emerald-100",
+    medium: "text-amber-600  bg-amber-50  border-amber-100",
+    low:    "text-slate-500  bg-slate-100 border-slate-200",
   };
 
   const predictedLabel = (() => {
-    try {
-      return format(parseISO(prediction.predicted_date), "MMM d");
-    } catch {
-      return prediction.predicted_date;
-    }
+    try { return format(parseISO(prediction.predicted_date), "MMM d"); }
+    catch { return prediction.predicted_date; }
   })();
 
   const rangeLabel = (() => {
     try {
       return `${format(parseISO(prediction.range_start), "MMM d")} – ${format(parseISO(prediction.range_end), "MMM d")}`;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   })();
 
   return (
@@ -116,8 +103,10 @@ Analyze the actual gaps between periods and predict:
     >
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-violet-500" />
-        <span className="text-xs font-semibold text-violet-600 uppercase tracking-wider">AI Prediction</span>
-        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-auto capitalize ${confidenceColors[prediction.confidence] || confidenceColors.low}`}>
+        <span className="text-xs font-semibold text-violet-600 uppercase tracking-wider">Prediction</span>
+        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-auto capitalize border ${
+          confidenceColors[prediction.confidence] || confidenceColors.low
+        }`}>
           {prediction.confidence} confidence
         </span>
       </div>
